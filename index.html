@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ニンテンドーミュージアム 抽選組み合わせツール</title>
+  <style>
+    :root {
+      --primary-color: #e60012;
+      --primary-hover: #cc0010;
+      --bg-color: #f8f9fa;
+      --card-bg: #ffffff;
+      --text-main: #2b2b2b;
+      --text-sub: #666666;
+      --border-color: #e9ecef;
+      --selected-bg: #fff5f5;
+      --selected-border: #e60012;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      padding: 20px 12px;
+      max-width: 800px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+    }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+      border: 1px solid var(--border-color);
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .member-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .member-btn {
+      background: #ffffff;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      user-select: none;
+    }
+
+    .member-btn.active {
+      background: var(--selected-bg);
+      border-color: var(--selected-border);
+      color: var(--primary-color);
+    }
+
+    .generate-btn {
+      width: 100%;
+      background: var(--primary-color);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      box-shadow: 0 4px 12px rgba(230, 0, 18, 0.25);
+    }
+
+    .generate-btn:hover {
+      background: var(--primary-hover);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+
+    .summary-box {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+    }
+
+    .summary-box .val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+
+    .summary-box .lbl {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+    }
+
+    .pattern-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .pattern-item {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px;
+      background: #ffffff;
+    }
+
+    .applicant {
+      font-weight: 700;
+      color: var(--primary-color);
+      font-size: 1.05rem;
+      margin-bottom: 6px;
+    }
+
+    .companions {
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .count-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .count-table th, .count-table td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .count-table th {
+      background: #f8f9fa;
+      color: var(--text-sub);
+      font-weight: 600;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: #e9ecef;
+      color: #495057;
+    }
+
+    .badge.applicant-tag {
+      background: #ffe3e3;
+      color: #e60012;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🎮 抽選パターン自動生成</h1>
+    <p class="subtitle">13人の親戚でニンテンドーミュージアムに応募しよう！</p>
+  </header>
+
+  <div class="card">
+    <div class="section-title">
+      <span>1. 応募する（代表者になる）人を選択</span>
+    </div>
+    <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 12px;">
+      タップして「応募する人（赤枠）」を指定してください。
+    </p>
+    <div class="member-grid" id="memberGrid"></div>
+    <button class="generate-btn" onclick="generatePatterns()">組み合わせを計算する！</button>
+  </div>
+
+  <div id="resultSection" class="hidden">
+    <div class="card">
+      <div class="section-title">📊 応募サマリー</div>
+      <div class="summary-grid">
+        <div class="summary-box">
+          <div class="lbl">全体人数</div>
+          <div class="val">13人</div>
+        </div>
+        <div class="summary-box">
+          <div class="lbl">応募（代表者）人数</div>
+          <div class="val" id="summaryApplicants">0人</div>
+        </div>
+        <div class="summary-box">
+          <div class="lbl">延べ応募枠数</div>
+          <div class="val" id="summaryTotalSlots">0枠</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">🎯 各人の抽選（画面登場）回数</div>
+      <table class="count-table">
+        <thead>
+          <tr>
+            <th>名前</th>
+            <th>区分</th>
+            <th>合計抽選回数</th>
+          </tr>
+        </thead>
+        <tbody id="countTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📋 応募手順リスト（誰が誰と同伴するか）</div>
+      <div class="pattern-list" id="patternList"></div>
+    </div>
+  </div>
+
+  <script>
+    const ALL_MEMBERS = [
+      "かずき", "ゆう", "トッティ", "アキちゃん",
+      "ミクちゃん", "こうちゃん", "なっちゃん", "そうちゃん",
+      "ミィちゃん", "みーちゃん(母)", "クロちゃん", "あっちゃん", "一平ちゃん"
+    ];
+
+    let activeApplicants = new Set([
+      "かずき", "ゆう", "トッティ", "アキちゃん", "ミクちゃん",
+      "こうちゃん", "なっちゃん", "そうちゃん", "ミィちゃん", "一平ちゃん"
+    ]);
+
+    function initGrid() {
+      const grid = document.getElementById("memberGrid");
+      grid.innerHTML = "";
+      ALL_MEMBERS.forEach(name => {
+        const btn = document.createElement("div");
+        btn.className = `member-btn ${activeApplicants.has(name) ? "active" : ""}`;
+        btn.innerText = name;
+        btn.onclick = () => toggleMember(name, btn);
+        grid.appendChild(btn);
+      });
+    }
+
+    function toggleMember(name, element) {
+      if (activeApplicants.has(name)) {
+        activeApplicants.delete(name);
+        element.classList.remove("active");
+      } else {
+        activeApplicants.add(name);
+        element.classList.add("active");
+      }
+    }
+
+    // ★ゴリゴリ回数監視ロジック
+    function generatePatterns() {
+      const applicants = ALL_MEMBERS.filter(m => activeApplicants.has(m));
+      
+      if (applicants.length === 0) {
+        alert("少なくとも1人は「応募する人」に選択してください！");
+        return;
+      }
+
+      // リアルタイム回数記録用オブジェクト
+      const tracker = {};
+      ALL_MEMBERS.forEach(m => tracker[m] = 0);
+
+      const patterns = [];
+
+      // 応募者ごとに1枠ずつ埋めていく
+      applicants.forEach((applicant) => {
+        // 1. 代表者の登場回数を+1
+        tracker[applicant]++;
+
+        // 2. 代表者以外の12人から、登場回数が少ない順にソートする
+        // ※回数が同じ場合は、配列の後ろの方の人（一平ちゃん等）が有利になるようにちょっとずらす
+        const candidates = ALL_MEMBERS.filter(m => m !== applicant);
+
+        candidates.sort((a, b) => {
+          if (tracker[a] !== tracker[b]) {
+            return tracker[a] - tracker[b]; // 回数が少ない人を最優先
+          }
+          // 回数が同じなら、名前順のインデックスで判定（偏り防止）
+          return ALL_MEMBERS.indexOf(a) - ALL_MEMBERS.indexOf(b);
+        });
+
+        // 3. 上位6人を同伴者に決定
+        const selectedCompanions = candidates.slice(0, 6);
+
+        // 4. 選ばれた6人の回数を+1
+        selectedCompanions.forEach(c => tracker[c]++);
+
+        patterns.push({
+          applicant: applicant,
+          companions: selectedCompanions
+        });
+      });
+
+      renderSummary(applicants.length, applicants.length * 7);
+      renderCounts(tracker);
+      renderPatterns(patterns);
+
+      document.getElementById("resultSection").classList.remove("hidden");
+      document.getElementById("resultSection").scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderSummary(applicantsCount, totalSlots) {
+      document.getElementById("summaryApplicants").innerText = `${applicantsCount}人`;
+      document.getElementById("summaryTotalSlots").innerText = `${totalSlots}枠`;
+    }
+
+    function renderCounts(counts) {
+      const tbody = document.getElementById("countTableBody");
+      tbody.innerHTML = "";
+
+      ALL_MEMBERS.forEach(member => {
+        const tr = document.createElement("tr");
+        const isApplicant = activeApplicants.has(member);
+
+        tr.innerHTML = `
+          <td style="font-weight:600;">${member}</td>
+          <td><span class="badge ${isApplicant ? 'applicant-tag' : ''}">${isApplicant ? '応募する' : '同伴のみ'}</span></td>
+          <td style="font-weight:700; color: var(--primary-color);">${counts[member]} 回</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderPatterns(patterns) {
+      const list = document.getElementById("patternList");
+      list.innerHTML = "";
+
+      patterns.forEach((p, idx) => {
+        const item = document.createElement("div");
+        item.className = "pattern-item";
+        item.innerHTML = `
+          <div class="applicant">${idx + 1}. 代表者: ${p.applicant}</div>
+          <div class="companions"><strong>同伴者(6人):</strong> ${p.companions.join('、 ')}</div>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    initGrid();
+  </script>
+</body>
+</html>
